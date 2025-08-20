@@ -1,4 +1,5 @@
 import scrapy
 
-class ZillowAgentItem(scrapy.Item):
-    name = scrapy.Field()  # Only scraping the name
+class AgentItem(scrapy.Item):
+    name = scrapy.Field()
+    team_or_agent = scrapy.Field()
