@@ -15,7 +15,7 @@ class ChicagoAgentsSpider(scrapy.Spider):
             "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
         },
         "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
-        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": True},
+        "PLAYWRIGHT_LAUNCH_OPTIONS": {"headless": False},  # set False to debug visually
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60000,
     }
 
@@ -26,32 +26,29 @@ class ChicagoAgentsSpider(scrapy.Spider):
                 meta=dict(
                     playwright=True,
                     playwright_page_methods=[
-                        PageMethod("wait_for_selector", "div[data-testid='list-card']"),
-                        PageMethod("wait_for_timeout", 3000),
+                        # wait for agent card wrapper (unique to agents page)
+                        PageMethod("wait_for_selector", "article"),
+                        PageMethod("wait_for_timeout", 5000),
                     ],
                 ),
                 callback=self.parse,
             )
 
     def parse(self, response):
-        # Zillow agent cards (check latest data-testid usage)
-        cards = response.css("div[data-testid='list-card']")
-        self.logger.info(f"Found {len(cards)} cards on {response.url}")
+        # Inspecting Zillow agent pages → agent cards use <article> tags
+        cards = response.css("article")
+        self.logger.info(f"Found {len(cards)} agent cards on {response.url}")
 
         for card in cards:
             name = card.css("h2::text").get()
-            company = card.css("span:contains('Brokerage')::text").get()
-            rating = card.css("span:contains('Rating')::text").get()
-            reviews = card.css("span:contains('reviews')::text").get()
+
 
             yield {
                 "name": name,
-                "company": company,
-                "rating": rating,
-                "reviews": reviews,
+               
             }
 
-        # Handle pagination
+        # Pagination
         next_page = response.css("a[title='Next page']::attr(href)").get()
         if next_page:
             yield response.follow(
@@ -59,8 +56,8 @@ class ChicagoAgentsSpider(scrapy.Spider):
                 meta=dict(
                     playwright=True,
                     playwright_page_methods=[
-                        PageMethod("wait_for_selector", "div[data-testid='list-card']"),
-                        PageMethod("wait_for_timeout", 3000),
+                        PageMethod("wait_for_selector", "article"),
+                        PageMethod("wait_for_timeout", 5000),
                     ],
                 ),
                 callback=self.parse,
