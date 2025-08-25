@@ -23,42 +23,8 @@ class ChicagoAgentsSpider(scrapy.Spider):
         for url in self.start_urls:
             yield scrapy.Request(
                 url,
-                meta=dict(
-                    playwright=True,
-                    playwright_page_methods=[
-                        # wait for agent card wrapper (unique to agents page)
-                        PageMethod("wait_for_selector", "article"),
-                        PageMethod("wait_for_timeout", 5000),
-                    ],
-                ),
-                callback=self.parse,
+                
             )
 
-    def parse(self, response):
         # Inspecting Zillow agent pages → agent cards use <article> tags
-        cards = response.css("article")
-        self.logger.info(f"Found {len(cards)} agent cards on {response.url}")
-
-        for card in cards:
-            name = card.css("h2::text").get()
-
-
-            yield {
-                "name": name,
-               
-            }
-
-        # Pagination
-        next_page = response.css("a[title='Next page']::attr(href)").get()
-        if next_page:
-            yield response.follow(
-                next_page,
-                meta=dict(
-                    playwright=True,
-                    playwright_page_methods=[
-                        PageMethod("wait_for_selector", "article"),
-                        PageMethod("wait_for_timeout", 5000),
-                    ],
-                ),
-                callback=self.parse,
-            )
+       
